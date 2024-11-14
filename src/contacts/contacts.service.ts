@@ -4,7 +4,8 @@ import { Repository } from 'typeorm';
 import { Contact } from './entities/contact.entity';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
-import { User } from 'src/users/entities/user.entity'; // Asegúrate de importar la entidad User
+import { User } from 'src/users/entities/user.entity';
+import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
 
 @Injectable()
 export class ContactService {
@@ -14,11 +15,14 @@ export class ContactService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async create(
     createContactDto: CreateContactDto,
     userId: string,
+    file?: Express.Multer.File,
   ): Promise<Contact> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
@@ -26,9 +30,20 @@ export class ContactService {
       throw new NotFoundException('User not found');
     }
 
+    let profilePicturePublicId: string | null = null;
+    if (file) {
+      const result = await this.cloudinaryService.uploadImage(file);
+      if ('public_id' in result) {
+        profilePicturePublicId = result.public_id;
+      } else {
+        throw new Error('Error uploading image to Cloudinary');
+      }
+    }
+
     const contact = this.contactRepository.create({
       ...createContactDto,
       userId: user,
+      profilePicture: profilePicturePublicId,
     });
 
     return await this.contactRepository.save(contact);
@@ -67,21 +82,52 @@ export class ContactService {
   async update(
     id: string,
     updateContactDto: UpdateContactDto,
+    file?: Express.Multer.File,
   ): Promise<Contact> {
-    await this.contactRepository.update(id, updateContactDto);
-    const updatedContact = await this.contactRepository.findOne({
+    const contact = await this.contactRepository.findOne({
       where: { id },
     });
-    if (!updatedContact) {
+
+    if (!contact) {
       throw new NotFoundException('Contact not found');
     }
+
+    let profilePicturePublicId: string | null = null;
+    if (file) {
+      const result = await this.cloudinaryService.uploadImage(file);
+      if ('public_id' in result) {
+        profilePicturePublicId = result.public_id;
+      } else {
+        throw new Error('Error uploading image to Cloudinary');
+      }
+
+      if (contact.profilePicture) {
+        await this.cloudinaryService.deleteImage(contact.profilePicture);
+      }
+    }
+
+    const updatedContact = Object.assign(contact, updateContactDto, {
+      profilePicture: profilePicturePublicId ?? contact.profilePicture,
+    });
+
+    await this.contactRepository.save(updatedContact);
+
     return updatedContact;
   }
 
   async remove(id: string): Promise<void> {
-    const result = await this.contactRepository.delete(id);
-    if (result.affected === 0) {
+    const contact = await this.contactRepository.findOne({
+      where: { id },
+    });
+
+    if (!contact) {
       throw new NotFoundException('Contact not found');
     }
+
+    if (contact.profilePicture) {
+      await this.cloudinaryService.deleteImage(contact.profilePicture);
+    }
+
+    await this.contactRepository.delete(id);
   }
 }
