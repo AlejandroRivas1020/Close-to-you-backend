@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { dbConfig } from './common/config/db.config';
 import { ContactsModule } from './contacts/contacts.module';
 import { AuthModule } from './auth/auth.module';
+import { CloudinaryModule } from './common/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     ContactsModule,
     AuthModule,
+    CloudinaryModule,
   ],
   controllers: [],
   providers: [],
