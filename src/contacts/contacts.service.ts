@@ -49,25 +49,31 @@ export class ContactService {
     return await this.contactRepository.save(contact);
   }
 
-  async findAll(): Promise<Contact[]> {
-    return await this.contactRepository.find();
+  async findAll(userId: string): Promise<Contact[]> {
+    return await this.contactRepository.find({
+      where: { userId: { id: userId } },
+    });
   }
 
-  async findOne(filter: {
-    email?: string;
-    phone?: number;
-    name?: string;
-  }): Promise<Contact> {
+  async findOne(
+    filter: {
+      email?: string;
+      phone?: string;
+      name?: string;
+    },
+    userId: string,
+  ): Promise<Contact> {
     const query = this.contactRepository.createQueryBuilder('contact');
+    query.where('contact.userId = :userId', { userId });
 
     if (filter.email) {
-      query.orWhere('contact.email = :email', { email: filter.email });
+      query.andWhere('contact.email = :email', { email: filter.email });
     }
     if (filter.phone) {
-      query.orWhere('contact.phone = :phone', { phone: filter.phone });
+      query.andWhere('contact.phone = :phone', { phone: filter.phone });
     }
     if (filter.name) {
-      query.orWhere('contact.name = :name', { name: filter.name });
+      query.andWhere('contact.name = :name', { name: filter.name });
     }
 
     const contact = await query.getOne();
