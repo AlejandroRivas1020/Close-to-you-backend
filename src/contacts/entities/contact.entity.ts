@@ -19,8 +19,8 @@ export class Contact {
   @Column({ type: 'varchar', length: 255, nullable: true })
   email: string;
 
-  @Column({ type: 'int' })
-  phone: number;
+  @Column({ type: 'varchar', length: 100 })
+  phone: string;
 
   @Column({
     type: 'varchar',
@@ -39,7 +39,6 @@ export class Contact {
   @Column({ type: 'text', nullable: true, name: 'profile_picture' })
   profilePicture: string;
 
-  // Relación con User
   @ManyToOne(() => User, (user) => user.contacts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_Id' })
   userId: User;

@@ -55,8 +55,9 @@ export class ContactController {
     description: 'List of all contacts.',
     type: [Contact],
   })
-  async findAll(): Promise<Contact[]> {
-    return await this.contactService.findAll();
+  async findAll(@Req() req: AuthenticatedRequest): Promise<Contact[]> {
+    const userId = req.user.userId;
+    return await this.contactService.findAll(userId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -84,12 +85,19 @@ export class ContactController {
   })
   @ApiResponse({ status: 404, description: 'Contact not found.' })
   async findOne(
+    @Req() req: AuthenticatedRequest,
     @Query('email') email?: string,
-    @Query('phone') phone?: number,
+    @Query('phone') phone?: string,
     @Query('name') name?: string,
   ): Promise<Contact> {
-    const filter = { email, phone: phone ? +phone : undefined, name };
-    return await this.contactService.findOne(filter);
+    const userId = req.user.userId;
+    const filter = {
+      email: email || undefined,
+      phone: phone || undefined,
+      name: name || undefined,
+    };
+
+    return await this.contactService.findOne(filter, userId);
   }
 
   @UseGuards(JwtAuthGuard)

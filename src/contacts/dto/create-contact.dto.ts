@@ -27,9 +27,9 @@ export class CreateContactDto {
     description: 'Phone number of the contact',
     example: 123456789,
   })
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  phone: number;
+  phone: string;
 
   @ApiProperty({
     description: 'Type of contact',
