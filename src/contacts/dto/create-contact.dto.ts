@@ -57,13 +57,4 @@ export class CreateContactDto {
   @IsNumber()
   @IsOptional()
   latitude?: number;
-
-  @ApiProperty({
-    description: 'URL of the contact profile picture',
-    example: 'http://example.com/image.jpg',
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  profilePicture?: string;
 }
