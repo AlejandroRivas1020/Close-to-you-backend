@@ -30,20 +30,22 @@ export class ContactService {
       throw new NotFoundException('User not found');
     }
 
-    let profilePicturePublicId: string | null = null;
+    let profilePictureUrl: string | null = null;
+
     if (file) {
       const result = await this.cloudinaryService.uploadImage(file);
-      if ('public_id' in result) {
-        profilePicturePublicId = result.public_id;
+
+      if ('secure_url' in result) {
+        profilePictureUrl = result.secure_url;
       } else {
-        throw new Error('Error uploading image to Cloudinary');
+        throw new Error('Error: secure_url not found in Cloudinary response');
       }
     }
 
     const contact = this.contactRepository.create({
       ...createContactDto,
       userId: user,
-      profilePicture: profilePicturePublicId,
+      profilePicture: profilePictureUrl,
     });
 
     return await this.contactRepository.save(contact);
