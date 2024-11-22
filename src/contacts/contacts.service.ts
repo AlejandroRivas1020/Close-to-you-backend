@@ -136,4 +136,19 @@ export class ContactService {
 
     await this.contactRepository.delete(id);
   }
+
+  async findById(id: string, userId: string): Promise<Contact> {
+    const contact = await this.contactRepository.findOne({
+      where: {
+        id,
+        userId: { id: userId },
+      },
+    });
+
+    if (!contact) {
+      throw new NotFoundException('Contact not found');
+    }
+
+    return contact;
+  }
 }

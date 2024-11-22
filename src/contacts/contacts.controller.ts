@@ -126,4 +126,21 @@ export class ContactController {
   async remove(@Param('id') id: string): Promise<void> {
     return await this.contactService.remove(id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  @ApiOperation({ summary: 'Find a contact by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Contact found by ID.',
+    type: Contact,
+  })
+  @ApiResponse({ status: 404, description: 'Contact not found.' })
+  async findById(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<Contact> {
+    const userId = req.user.userId;
+    return await this.contactService.findById(id, userId);
+  }
 }
