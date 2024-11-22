@@ -93,32 +93,35 @@ export class ContactService {
   async update(
     id: string,
     updateContactDto: UpdateContactDto,
+    userId: string,
     file?: Express.Multer.File,
   ): Promise<Contact> {
     const contact = await this.contactRepository.findOne({
-      where: { id },
+      where: { id, userId: { id: userId } },
     });
 
     if (!contact) {
       throw new NotFoundException('Contact not found');
     }
 
-    let profilePicturePublicId: string | null = null;
+    let profilePictureUrl: string | null = contact.profilePicture;
+
     if (file) {
       const result = await this.cloudinaryService.uploadImage(file);
-      if ('public_id' in result) {
-        profilePicturePublicId = result.public_id;
-      } else {
-        throw new Error('Error uploading image to Cloudinary');
-      }
 
-      if (contact.profilePicture) {
-        await this.cloudinaryService.deleteImage(contact.profilePicture);
+      if (result?.secure_url) {
+        profilePictureUrl = result.secure_url;
+
+        if (contact.profilePicture) {
+          await this.cloudinaryService.deleteImage(contact.profilePicture);
+        }
+      } else {
+        throw new Error('Error: secure_url not found in Cloudinary response');
       }
     }
 
     const updatedContact = Object.assign(contact, updateContactDto, {
-      profilePicture: profilePicturePublicId ?? contact.profilePicture,
+      profilePicture: profilePictureUrl,
     });
 
     await this.contactRepository.save(updatedContact);

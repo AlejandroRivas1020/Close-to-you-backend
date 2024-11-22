@@ -30,6 +30,7 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateContactWithFileDto } from './dto/createContactWithFile.dto';
+import { UpdateContactWithFileDto } from './dto/update-contact-with-file.dto';
 
 @ApiTags('contacts')
 @ApiBearerAuth()
@@ -120,17 +121,26 @@ export class ContactController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a contact' })
   @ApiParam({ name: 'id', description: 'ID of the contact to update' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Update a contact with optional fields',
+    type: UpdateContactWithFileDto,
+  })
   @ApiResponse({
     status: 200,
     description: 'Contact updated successfully.',
     type: Contact,
   })
   @ApiResponse({ status: 404, description: 'Contact not found.' })
+  @UseInterceptors(FileInterceptor('file'))
   async update(
     @Param('id') id: string,
     @Body() updateContactDto: UpdateContactDto,
+    @Req() req: AuthenticatedRequest,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<Contact> {
-    return await this.contactService.update(id, updateContactDto);
+    const userId = req.user.userId;
+    return await this.contactService.update(id, updateContactDto, userId, file);
   }
 
   @UseGuards(JwtAuthGuard)
