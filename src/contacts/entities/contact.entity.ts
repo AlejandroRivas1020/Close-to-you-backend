@@ -37,7 +37,7 @@ export class Contact {
   latitude: number;
 
   @Column({ type: 'text', nullable: true, name: 'profile_picture' })
-  profilePicture: string;
+  profilePicture?: string;
 
   @ManyToOne(() => User, (user) => user.contacts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_Id' })

@@ -9,6 +9,8 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { ContactService } from './contacts.service';
 import { Contact } from './entities/contact.entity';
@@ -23,7 +25,11 @@ import {
   ApiParam,
   ApiQuery,
   ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateContactWithFileDto } from './dto/createContactWithFile.dto';
 
 @ApiTags('contacts')
 @ApiBearerAuth()
@@ -33,18 +39,28 @@ export class ContactController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  @ApiOperation({ summary: 'Create a new contact' })
+  @ApiOperation({
+    summary: 'Create a new contact with an optional profile picture',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Create a new contact with a profile picture (optional)',
+    type: CreateContactWithFileDto,
+    required: true,
+  })
   @ApiResponse({
     status: 201,
     description: 'Contact created successfully.',
     type: Contact,
   })
+  @UseInterceptors(FileInterceptor('file'))
   async create(
     @Body() createContactDto: CreateContactDto,
     @Req() req: AuthenticatedRequest,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<Contact> {
     const userId = req.user.userId;
-    return await this.contactService.create(createContactDto, userId);
+    return await this.contactService.create(createContactDto, userId, file);
   }
 
   @UseGuards(JwtAuthGuard)

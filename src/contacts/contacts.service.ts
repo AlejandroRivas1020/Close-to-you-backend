@@ -35,7 +35,7 @@ export class ContactService {
     if (file) {
       const result = await this.cloudinaryService.uploadImage(file);
 
-      if ('secure_url' in result) {
+      if (result?.secure_url) {
         profilePictureUrl = result.secure_url;
       } else {
         throw new Error('Error: secure_url not found in Cloudinary response');
@@ -44,8 +44,8 @@ export class ContactService {
 
     const contact = this.contactRepository.create({
       ...createContactDto,
-      userId: user,
       profilePicture: profilePictureUrl,
+      userId: user,
     });
 
     return await this.contactRepository.save(contact);
@@ -54,6 +54,7 @@ export class ContactService {
   async findAll(userId: string): Promise<Contact[]> {
     return await this.contactRepository.find({
       where: { userId: { id: userId } },
+      order: { name: 'ASC' },
     });
   }
 
@@ -77,6 +78,8 @@ export class ContactService {
     if (filter.name) {
       query.andWhere('contact.name = :name', { name: filter.name });
     }
+
+    query.orderBy('contact.name', 'ASC');
 
     const contact = await query.getOne();
 
